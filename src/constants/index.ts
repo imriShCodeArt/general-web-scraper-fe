@@ -53,3 +53,6 @@ export const UI_CONSTANTS = {
   TOAST_DURATION: 4000,
   ANIMATION_DURATION: 200,
 } as const;
+
+// Re-export UI constants
+export * from './ui';

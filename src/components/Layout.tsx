@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useAppStore } from '../store';
+import { useAppStore } from '@/store';
 import { 
   Menu, 
   X, 
@@ -11,7 +11,7 @@ import {
   Settings,
   Github
 } from 'lucide-react';
-import { cn } from '../utils';
+import { cn } from '@/utils';
 
 interface LayoutProps {
   children: ReactNode;
@@ -27,11 +27,10 @@ const navigation = [
 export default function Layout({ children }: LayoutProps) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { sidebarOpen, setSidebarOpen, activeTab, setActiveTab } = useAppStore();
-
-  const handleNavigation = (href: string) => {
-    navigate(href);
-    setActiveTab(href === '/' ? 'dashboard' : href.slice(1) as any);
+  const { sidebarOpen, setSidebarOpen } = useAppStore();
+  
+  const handleTabClick = (path: string) => {
+    navigate(path);
     if (window.innerWidth < 768) {
       setSidebarOpen(false);
     }
@@ -66,7 +65,7 @@ export default function Layout({ children }: LayoutProps) {
               return (
                 <button
                   key={item.name}
-                  onClick={() => handleNavigation(item.href)}
+                  onClick={() => handleTabClick(item.href)}
                   className={cn(
                     "w-full flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors",
                     isActive

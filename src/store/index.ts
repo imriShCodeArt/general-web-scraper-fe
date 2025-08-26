@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
-import { RecipeConfig, ScrapingJob } from '../types';
+import { RecipeConfig, ScrapingJob } from '@/types';
 
 interface AppState {
   // Recipes

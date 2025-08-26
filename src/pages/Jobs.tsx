@@ -1,26 +1,21 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAppStore } from '../store';
-import { scrapingApi } from '../services/api';
+import { useAppStore } from '@/store';
+import { scrapingApi } from '@/services/api';
 import { toast } from 'react-hot-toast';
 import { 
   Clock, 
   Search, 
-  Filter, 
   Play, 
   Pause, 
   Trash2, 
   Download,
   Eye,
-  RefreshCw,
-  AlertCircle,
-  CheckCircle,
-  XCircle,
-  Hourglass
+  RefreshCw
 } from 'lucide-react';
-import { cn, formatDate, formatRelativeTime, getStatusColor, getStatusIcon } from '../utils';
-import { ScrapingJob } from '../types';
-import NewJobModal from '../components/NewJobModal';
+import { cn, formatDate, formatRelativeTime, getStatusColor, getStatusIcon } from '@/utils';
+import { ScrapingJob, NewScrapingJobForm } from '@/types';
+import NewJobModal from '@/components/NewJobModal';
 
 type JobStatus = 'all' | 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
 
@@ -51,7 +46,7 @@ export default function Jobs() {
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
-      const updatedJobs = await scrapingApi.getAllJobs();
+      await scrapingApi.getAllJobs();
       // Update store with fresh data
       // Note: This would typically update the store
       toast.success('Jobs refreshed successfully');
@@ -130,7 +125,7 @@ export default function Jobs() {
     }
   };
 
-  const handleStartJob = async (jobData: any) => {
+  const handleStartJob = async (jobData: NewScrapingJobForm) => {
     try {
       const newJob = await scrapingApi.init(jobData);
       addJob(newJob);

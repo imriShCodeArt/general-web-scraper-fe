@@ -1,33 +1,26 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useAppStore } from '../store';
-import { scrapingApi, storageApi } from '../services/api';
+import { useAppStore } from '@/store';
+import { scrapingApi, storageApi } from '@/services/api';
 import { toast } from 'react-hot-toast';
 import { 
   ArrowLeft,
-  Play,
   Pause,
   Trash2,
   Download,
   RefreshCw,
   Clock,
-  Globe,
-  BookOpen,
-  AlertCircle,
-  CheckCircle,
-  XCircle,
-  Hourglass,
   FileText,
   Database,
   BarChart3,
-  Settings,
   Eye,
   Copy,
   ExternalLink,
-  FileDown
+  FileDown,
+  AlertCircle
 } from 'lucide-react';
-import { cn, formatDate, formatRelativeTime, getStatusColor, getStatusIcon, formatFileSize } from '../utils';
-import { ScrapingJob } from '../types';
+import { cn, formatDate, getStatusColor, getStatusIcon, formatFileSize } from '@/utils';
+import { ScrapingJob } from '@/types';
 
 export default function JobDetail() {
   const { id } = useParams();

@@ -1,18 +1,19 @@
-import { useAppStore } from '../store';
-import { scrapingApi } from '../services/api';
+import { useAppStore } from '@/store';
+import { scrapingApi } from '@/services/api';
 import { toast } from 'react-hot-toast';
 import { 
   Play, 
   BookOpen, 
   Clock, 
   HardDrive, 
-  TrendingUp,   AlertCircle,
   CheckCircle,
   XCircle
 } from 'lucide-react';
-import { cn, formatDate, getStatusColor, getStatusIcon } from '../utils';
-import NewJobModal from '../components/NewJobModal';
+import { cn, formatDate, getStatusColor, getStatusIcon } from '@/utils';
+import NewJobModal from '@/components/NewJobModal';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { ScrapingJob, NewScrapingJobForm } from '@/types';
 
 export default function Dashboard() {
   const { 
@@ -25,12 +26,13 @@ export default function Dashboard() {
   } = useAppStore();
   
   const [showNewJobModal, setShowNewJobModal] = useState(false);
+  const navigate = useNavigate();
 
   const activeJobs = getActiveJobs();
   const completedJobs = getCompletedJobs();
   const failedJobs = getFailedJobs();
 
-  const handleStartJob = async (jobData: any) => {
+  const handleStartJob = async (jobData: NewScrapingJobForm) => {
     try {
       const newJob = await scrapingApi.init(jobData);
       addJob(newJob);
@@ -40,6 +42,10 @@ export default function Dashboard() {
       console.error('Failed to start job:', error);
       toast.error('Failed to start scraping job');
     }
+  };
+
+  const handleJobClick = (job: ScrapingJob) => {
+    navigate(`/jobs/${job.id}`);
   };
 
   const stats = [
@@ -176,7 +182,7 @@ export default function Dashboard() {
                 <div
                   key={job.id || `dashboard-job-${Math.random()}`}
                   className="flex items-center justify-between p-3 rounded-lg border border-gray-200 hover:border-gray-300 transition-colors cursor-pointer"
-                  onClick={() => window.location.href = `/jobs/${job.id || 'unknown'}`}
+                  onClick={() => handleJobClick(job)}
                 >
                   <div className="flex items-center space-x-3">
                     <span className={cn("text-lg", getStatusColor(job.status || 'unknown'))}>

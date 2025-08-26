@@ -3,14 +3,13 @@ import {
   RecipeConfig,
   ScrapingJob,
   NewScrapingJobForm,
-  RecipeForm,
   ApiResponse,
   RecipeListResponse,
   RecipeResponse,
   ScrapingJobResponse,
   ScrapingJobsResponse,
   StorageStatsResponse,
-} from '../types';
+} from '@/types';
 
 // Create axios instance with base configuration
 const api = axios.create({

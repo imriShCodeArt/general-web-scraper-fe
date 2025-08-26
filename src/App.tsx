@@ -21,7 +21,6 @@ function App() {
     setJobs, 
     setRecipesLoading, 
     setJobsLoading,
-    addJob,
     updateJob 
   } = useAppStore();
 

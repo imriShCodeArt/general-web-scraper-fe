@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAppStore } from '../store';
-import { recipeApi } from '../services/api';
+import { useAppStore } from '@/store';
+import { recipeApi } from '@/services/api';
 import { toast } from 'react-hot-toast';
 import { 
   BookOpen, 
@@ -12,16 +12,14 @@ import {
   Trash2, 
   CheckCircle,
   AlertCircle,
-  Globe,
-  Code,
-  Settings
+  Globe
 } from 'lucide-react';
-import { cn, formatDate, parseSelectors, formatSelector } from '../utils';
-import { RecipeConfig } from '../types';
+import { formatDate } from '@/utils';
+import { RecipeConfig } from '@/types';
 
 export default function Recipes() {
   const navigate = useNavigate();
-  const { recipes, recipesLoading, setRecipes } = useAppStore();
+  const { recipes } = useAppStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRecipe, setSelectedRecipe] = useState<RecipeConfig | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
