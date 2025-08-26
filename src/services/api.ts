@@ -27,7 +27,7 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     // Add request timestamp for performance tracking
-    config.metadata = { startTime: new Date() };
+    (config as any).metadata = { startTime: new Date() };
     return config;
   },
   (error) => {
@@ -39,8 +39,8 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => {
     // Calculate request duration for performance monitoring
-    if (response.config.metadata?.startTime) {
-      const duration = new Date().getTime() - response.config.metadata.startTime.getTime();
+    if ((response.config as any).metadata?.startTime) {
+      const duration = new Date().getTime() - (response.config as any).metadata.startTime.getTime();
       if (duration > 5000) { // Log slow requests
         console.warn(`Slow API request: ${response.config.url} took ${duration}ms`);
       }

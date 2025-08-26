@@ -48,17 +48,29 @@ src/
 
 ### Installation
 
-1. **Install dependencies:**
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/yourusername/general-web-scraper-fe.git
+   cd general-web-scraper-fe
+   ```
+
+2. **Install dependencies:**
    ```bash
    npm install
    ```
 
-2. **Start development server:**
+3. **Set up environment variables:**
+   ```bash
+   cp env.example .env.local
+   # Edit .env.local with your configuration
+   ```
+
+4. **Start development server:**
    ```bash
    npm run dev
    ```
 
-3. **Open your browser:**
+5. **Open your browser:**
    Navigate to `http://localhost:3001`
 
 ### Build for Production
@@ -133,22 +145,58 @@ The built application can be deployed to any static hosting service:
 
 ## 📝 Development
 
-### Code Style
-- **ESLint**: Code quality and consistency
-- **Prettier**: Code formatting
-- **TypeScript**: Type safety and IntelliSense
+### Available Scripts
 
-### Testing
 ```bash
-npm run test
-npm run test:watch
+# Development
+npm run dev              # Start development server
+npm run build           # Build for production
+npm run preview         # Preview production build
+
+# Code Quality
+npm run lint            # Run ESLint
+npm run lint:fix        # Fix ESLint issues
+npm run format          # Format code with Prettier
+npm run format:check    # Check code formatting
+npm run type-check      # Run TypeScript type checking
+
+# Testing
+npm run test            # Run tests
+npm run test:ui         # Run tests with UI
+npm run test:coverage   # Run tests with coverage
 ```
 
-### Building
-```bash
-npm run build
-npm run preview
+### Code Style & Quality
+- **ESLint**: Code quality and consistency with React/TypeScript rules
+- **Prettier**: Automatic code formatting
+- **TypeScript**: Strict type checking and IntelliSense
+- **Path Aliases**: Clean imports with `@/` prefix
+- **Error Boundaries**: Graceful error handling
+- **Custom Hooks**: Reusable logic encapsulation
+
+### Project Structure
 ```
+src/
+├── components/          # Reusable UI components
+│   ├── __tests__/      # Component tests
+│   ├── ErrorBoundary.tsx
+│   └── LoadingSpinner.tsx
+├── constants/           # App constants and configuration
+├── hooks/               # Custom React hooks
+├── pages/               # Page components
+├── services/            # API services and utilities
+├── store/               # State management (Zustand)
+├── types/               # TypeScript type definitions
+├── utils/               # Utility functions
+├── App.tsx             # Main app component
+└── main.tsx            # App entry point
+```
+
+### Testing Strategy
+- **Unit Tests**: Component testing with React Testing Library
+- **Integration Tests**: Hook and utility function testing
+- **Coverage**: Minimum 80% code coverage requirement
+- **Mocking**: Comprehensive mocking for external dependencies
 
 ## 🤝 Contributing
 

@@ -1,17 +1,19 @@
 import { useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
-import { useAppStore } from './store';
-import { recipeApi, scrapingApi } from './services/api';
+import { useAppStore } from '@/store';
+import { recipeApi, scrapingApi } from '@/services/api';
 import { toast } from 'react-hot-toast';
+import { APP_CONFIG } from '@/constants';
 
 // Components
-import Layout from './components/Layout';
-import Dashboard from './pages/Dashboard';
-import Recipes from './pages/Recipes';
-import Jobs from './pages/Jobs';
-import Storage from './pages/Storage';
-import RecipeDetail from './pages/RecipeDetail';
-import JobDetail from './pages/JobDetail';
+import Layout from '@/components/Layout';
+import ErrorBoundary from '@/components/ErrorBoundary';
+import Dashboard from '@/pages/Dashboard';
+import Recipes from '@/pages/Recipes';
+import Jobs from '@/pages/Jobs';
+import Storage from '@/pages/Storage';
+import RecipeDetail from '@/pages/RecipeDetail';
+import JobDetail from '@/pages/JobDetail';
 
 function App() {
   const { 
@@ -75,22 +77,24 @@ function App() {
       } catch (error) {
         console.error('Failed to update jobs:', error);
       }
-    }, 5000); // Update every 5 seconds
+    }, APP_CONFIG.POLLING_INTERVAL);
 
     return () => clearInterval(interval);
   }, [setJobs, updateJob]);
 
   return (
-    <Layout>
-      <Routes>
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/recipes" element={<Recipes />} />
-        <Route path="/recipes/:name" element={<RecipeDetail />} />
-        <Route path="/jobs" element={<Jobs />} />
-        <Route path="/jobs/:id" element={<JobDetail />} />
-        <Route path="/storage" element={<Storage />} />
-      </Routes>
-    </Layout>
+    <ErrorBoundary>
+      <Layout>
+        <Routes>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/recipes" element={<Recipes />} />
+          <Route path="/recipes/:name" element={<RecipeDetail />} />
+          <Route path="/jobs" element={<Jobs />} />
+          <Route path="/jobs/:id" element={<JobDetail />} />
+          <Route path="/storage" element={<Storage />} />
+        </Routes>
+      </Layout>
+    </ErrorBoundary>
   );
 }
 
