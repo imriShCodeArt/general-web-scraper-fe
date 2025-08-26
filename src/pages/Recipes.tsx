@@ -19,7 +19,7 @@ import { RecipeConfig } from '@/types';
 
 export default function Recipes() {
   const navigate = useNavigate();
-  const { recipes } = useAppStore();
+  const { recipes, recipesLoading } = useAppStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRecipe, setSelectedRecipe] = useState<RecipeConfig | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
