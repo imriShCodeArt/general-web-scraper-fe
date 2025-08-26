@@ -169,6 +169,7 @@ export default function NewJobModal({ isOpen, onClose, onSubmit, recipes }: NewJ
                     </label>
                     <input
                       {...register('options.maxProducts', {
+                        valueAsNumber: true,
                         min: { value: 1, message: 'Must be at least 1' },
                         max: { value: 10000, message: 'Must be at most 10,000' },
                       })}
@@ -192,6 +193,7 @@ export default function NewJobModal({ isOpen, onClose, onSubmit, recipes }: NewJ
                     </label>
                     <input
                       {...register('options.delay', {
+                        valueAsNumber: true,
                         min: { value: 0, message: 'Must be at least 0' },
                         max: { value: 10000, message: 'Must be at most 10,000' },
                       })}
@@ -216,6 +218,7 @@ export default function NewJobModal({ isOpen, onClose, onSubmit, recipes }: NewJ
                     </label>
                     <input
                       {...register('options.timeout', {
+                        valueAsNumber: true,
                         min: { value: 5000, message: 'Must be at least 5,000' },
                         max: { value: 120000, message: 'Must be at most 120,000' },
                       })}
@@ -240,6 +243,7 @@ export default function NewJobModal({ isOpen, onClose, onSubmit, recipes }: NewJ
                     </label>
                     <input
                       {...register('options.maxConcurrent', {
+                        valueAsNumber: true,
                         min: { value: 1, message: 'Must be at least 1' },
                         max: { value: 20, message: 'Must be at most 20' },
                       })}
@@ -266,6 +270,7 @@ export default function NewJobModal({ isOpen, onClose, onSubmit, recipes }: NewJ
                     </label>
                     <input
                       {...register('options.batchSize', {
+                        valueAsNumber: true,
                         min: { value: 1, message: 'Must be at least 1' },
                         max: { value: 50, message: 'Must be at most 50' },
                       })}
