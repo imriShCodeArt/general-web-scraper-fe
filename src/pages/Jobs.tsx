@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '@/store';
 import { scrapingApi, recipeApi } from '@/services/api';
@@ -20,18 +20,14 @@ type LocalJobStatus = JobStatus;
 
 export default function Jobs() {
   const navigate = useNavigate();
-  const { jobs, jobsLoading, recipes, addJob, updateJob, setRecipes, setRecipesLoading } = useAppStore();
+  const { jobs, jobsLoading, recipes, addJob, updateJob, setRecipes, setRecipesLoading, setJobs } = useAppStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<LocalJobStatus>('all');
   const [showNewJobModal, setShowNewJobModal] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(null);
-
-  console.log('Jobs in component:', jobs); // Debug log
-  console.log('Search term:', searchTerm); // Debug log
   
+
   const filteredJobs = jobs.filter(job => {
-    console.log('Filtering job:', job); // Debug log
     const matchesSearch = 
       (job.siteUrl?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
       (job.recipe?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
@@ -45,9 +41,9 @@ export default function Jobs() {
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
-      await scrapingApi.getAllJobs();
+      const latestJobs = await scrapingApi.getAllJobs();
       // Update store with fresh data
-      // Note: This would typically update the store
+      setJobs(latestJobs);
       toast.success('Jobs refreshed successfully');
     } catch (error) {
       console.error('Failed to refresh jobs:', error);
@@ -57,52 +53,7 @@ export default function Jobs() {
     }
   };
 
-  // Auto-poll running jobs for progress updates
-  const pollRunningJobs = useCallback(async () => {
-    const runningJobs = jobs.filter(job => job.status === 'running');
-    if (runningJobs.length === 0) return;
-
-    try {
-      for (const job of runningJobs) {
-        const updatedJob = await scrapingApi.getStatus(job.id);
-        if (updatedJob.status !== job.status || updatedJob.progress !== job.progress) {
-          updateJob(job.id, updatedJob);
-        }
-      }
-    } catch (error) {
-      console.error('Failed to poll running jobs:', error);
-    }
-  }, [jobs, updateJob]);
-
-  // Start/stop polling based on running jobs
-  useEffect(() => {
-    const runningJobs = jobs.filter(job => job.status === 'running');
-    
-    if (runningJobs.length > 0) {
-      // Poll every 2 seconds for running jobs
-      const interval = setInterval(pollRunningJobs, 2000);
-      setPollingInterval(interval);
-      
-      return () => {
-        if (interval) clearInterval(interval);
-      };
-    } else {
-      // Stop polling if no running jobs
-      if (pollingInterval) {
-        clearInterval(pollingInterval);
-        setPollingInterval(null);
-      }
-    }
-  }, [jobs, pollRunningJobs, pollingInterval]);
-
-  // Cleanup polling on unmount
-  useEffect(() => {
-    return () => {
-      if (pollingInterval) {
-        clearInterval(pollingInterval);
-      }
-    };
-  }, [pollingInterval]);
+  // Per-page polling removed; app-level selective polling handles active jobs
 
   const handleCancelJob = async (job: ScrapingJob) => {
     try {

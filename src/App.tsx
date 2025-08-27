@@ -14,6 +14,7 @@ import Jobs from '@/pages/Jobs';
 import Storage from '@/pages/Storage';
 import RecipeDetail from '@/pages/RecipeDetail';
 import JobDetail from '@/pages/JobDetail';
+import Performance from '@/pages/Performance';
 
 function App() {
   const { 
@@ -31,7 +32,6 @@ function App() {
         // Load recipes
         setRecipesLoading(true);
         const recipes = await recipeApi.list();
-        console.log('Loaded recipes:', recipes); // Debug log
         setRecipes(recipes);
       } catch (error) {
         console.error('Failed to load recipes:', error);
@@ -56,30 +56,23 @@ function App() {
     loadInitialData();
   }, [setRecipes, setJobs, setRecipesLoading, setJobsLoading]);
 
-  // Set up real-time job updates
+  // Selective polling for active jobs (running/pending) without flooding the server
   useEffect(() => {
     const interval = setInterval(async () => {
       try {
-        const jobs = await scrapingApi.getAllJobs();
-        setJobs(jobs);
-        
-        // Update individual jobs if they're running
-        jobs.forEach(job => {
-          if (job.status === 'running' || job.status === 'pending') {
-            scrapingApi.getStatus(job.id)
-              .then(updatedJob => {
-                updateJob(job.id, updatedJob);
-              })
-              .catch(console.error);
-          }
-        });
+        const { jobs, setJobs } = useAppStore.getState();
+        const hasActive = jobs.some(j => !['completed', 'failed', 'cancelled'].includes(j.status));
+        if (!hasActive) return;
+
+        const latestJobs = await scrapingApi.getAllJobs();
+        setJobs(latestJobs);
       } catch (error) {
-        console.error('Failed to update jobs:', error);
+        console.error('Failed selective polling tick:', error);
       }
-    }, APP_CONFIG.POLLING_INTERVAL);
+    }, 4000);
 
     return () => clearInterval(interval);
-  }, [setJobs, updateJob]);
+  }, []);
 
   return (
     <ErrorBoundary>
@@ -91,6 +84,7 @@ function App() {
           <Route path="/jobs" element={<Jobs />} />
           <Route path="/jobs/:id" element={<JobDetail />} />
           <Route path="/storage" element={<Storage />} />
+          <Route path="/performance" element={<Performance />} />
         </Routes>
       </Layout>
     </ErrorBoundary>

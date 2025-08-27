@@ -8,6 +8,7 @@ import {
   BookOpen, 
   Clock, 
   HardDrive,
+  Activity,
   Settings,
   Github
 } from 'lucide-react';
@@ -22,6 +23,7 @@ const navigation = [
   { name: 'Recipes', href: '/recipes', icon: BookOpen },
   { name: 'Jobs', href: '/jobs', icon: Clock },
   { name: 'Storage', href: '/storage', icon: HardDrive },
+  { name: 'Performance', href: '/performance', icon: Activity },
 ];
 
 export default function Layout({ children }: LayoutProps) {

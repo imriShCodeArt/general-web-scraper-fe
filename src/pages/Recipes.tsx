@@ -23,12 +23,8 @@ export default function Recipes() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRecipe, setSelectedRecipe] = useState<RecipeConfig | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-
-  console.log('Recipes in component:', recipes); // Debug log
-  console.log('Search term:', searchTerm); // Debug log
   
   const filteredRecipes = recipes.filter(recipe => {
-    console.log('Filtering recipe:', recipe); // Debug log
     return (recipe.name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
            (recipe.description?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
            (recipe.siteUrl?.toLowerCase() || '').includes(searchTerm.toLowerCase());

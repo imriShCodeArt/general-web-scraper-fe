@@ -130,3 +130,64 @@ export interface RecipeForm {
     description?: string;
   };
 }
+
+// Performance monitoring types
+export interface LivePerformanceMetrics {
+  timestamp: number;
+  activeJobs: ActiveJob[];
+  queueLength: number;
+  isProcessing: boolean;
+  systemLoad: SystemLoad;
+}
+
+export interface ActiveJob {
+  id: string;
+  status: string;
+  progress: number;
+  duration: number;
+  productsPerSecond: string;
+}
+
+export interface SystemLoad {
+  memoryUsage: {
+    rss: number;
+    heapTotal: number;
+    heapUsed: number;
+    external: number;
+  };
+  cpuUsage: {
+    user: number;
+    system: number;
+  };
+  uptime: number;
+}
+
+export interface PerformanceRecommendation {
+  type: 'performance' | 'concurrency' | 'optimization' | 'resource';
+  priority: 'high' | 'medium' | 'low';
+  message: string;
+  suggestion: string;
+}
+
+export interface PerformanceRecommendations {
+  recommendations: PerformanceRecommendation[];
+  currentSettings: {
+    defaultMaxConcurrent: number;
+    defaultRateLimit: number;
+    fastModeAvailable: boolean;
+  };
+}
+
+export interface OverallPerformanceMetrics {
+  totalJobs: number;
+  totalProducts: number;
+  averageTimePerProduct: number;
+  totalProcessingTime: number;
+  activeJobs: number;
+  queuedJobs: number;
+  isProcessing: boolean;
+}
+
+export interface LivePerformanceResponse extends ApiResponse<LivePerformanceMetrics> {}
+export interface PerformanceRecommendationsResponse extends ApiResponse<PerformanceRecommendations> {}
+export interface OverallPerformanceResponse extends ApiResponse<OverallPerformanceMetrics> {}

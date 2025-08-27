@@ -9,6 +9,9 @@ import {
   ScrapingJobResponse,
   ScrapingJobsResponse,
   StorageStatsResponse,
+  LivePerformanceResponse,
+  PerformanceRecommendationsResponse,
+  OverallPerformanceResponse,
 } from '@/types';
 
 // Create axios instance with base configuration
@@ -40,19 +43,14 @@ api.interceptors.response.use(
     // Calculate request duration for performance monitoring
     if ((response.config as any).metadata?.startTime) {
       const duration = new Date().getTime() - (response.config as any).metadata.startTime.getTime();
-      if (duration > 5000) { // Log slow requests
-        console.warn(`Slow API request: ${response.config.url} took ${duration}ms`);
-      }
+      // Intentionally mute slow-request logs in production
     }
     return response;
   },
   (error) => {
     console.error('API Error:', error);
     
-    // Add retry logic for network errors
-    if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
-      console.warn('Request timeout, consider increasing timeout or reducing load');
-    }
+    // Intentionally mute timeout warnings in production
     
     return Promise.reject(error);
   }
@@ -125,7 +123,7 @@ export const scrapingApi = {
 
   // Get job status
   getStatus: async (jobId: string): Promise<ScrapingJob> => {
-    const response = await api.get<ScrapingJobResponse>(`/scrape/status/${jobId}`);
+    const response = await api.get<ScrapingJobResponse>(`/scrape/status/${jobId}`, { params: { _ts: Date.now() } });
     if (response.data.success && response.data.data) {
       return response.data.data;
     }
@@ -134,7 +132,7 @@ export const scrapingApi = {
 
   // Get all jobs
   getAllJobs: async (): Promise<ScrapingJob[]> => {
-    const response = await api.get<ScrapingJobsResponse>('/scrape/jobs');
+    const response = await api.get<ScrapingJobsResponse>('/scrape/jobs', { params: { _ts: Date.now() } });
     if (response.data.success && response.data.data) {
       return response.data.data;
     }
@@ -195,6 +193,36 @@ export const storageApi = {
       return true;
     }
     throw new Error(response.data.error || 'Failed to clear storage');
+  },
+};
+
+// Performance monitoring API endpoints
+export const performanceApi = {
+  // Get live performance metrics
+  getLiveMetrics: async () => {
+    const response = await api.get<LivePerformanceResponse>('/scrape/performance/live');
+    if (response.data.success && response.data.data) {
+      return response.data.data;
+    }
+    throw new Error(response.data.error || 'Failed to fetch live performance metrics');
+  },
+
+  // Get performance recommendations
+  getRecommendations: async () => {
+    const response = await api.get<PerformanceRecommendationsResponse>('/scrape/performance/recommendations');
+    if (response.data.success && response.data.data) {
+      return response.data.data;
+    }
+    throw new Error(response.data.error || 'Failed to fetch performance recommendations');
+  },
+
+  // Get overall performance metrics
+  getOverallMetrics: async () => {
+    const response = await api.get<OverallPerformanceResponse>('/scrape/performance');
+    if (response.data.success && response.data.data) {
+      return response.data.data;
+    }
+    throw new Error(response.data.error || 'Failed to fetch overall performance metrics');
   },
 };
 
