@@ -1,43 +1,33 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAppStore } from '../store';
-import { scrapingApi } from '../services/api';
+import { useAppStore } from '@/store';
+import { scrapingApi, recipeApi } from '@/services/api';
 import { toast } from 'react-hot-toast';
-import { 
-  Clock, 
-  Search, 
-  Filter, 
-  Play, 
-  Pause, 
-  Trash2, 
-  Download,
-  Eye,
-  RefreshCw,
-  AlertCircle,
-  CheckCircle,
-  XCircle,
-  Hourglass
-} from 'lucide-react';
-import { cn, formatDate, formatRelativeTime, getStatusColor, getStatusIcon } from '../utils';
-import { ScrapingJob } from '../types';
-import NewJobModal from '../components/NewJobModal';
+import { Clock } from 'lucide-react';
+import { cn, formatDate, formatRelativeTime, getStatusColor, getStatusIcon } from '@/utils';
+import { ScrapingJob, NewScrapingJobForm } from '@/types';
+import NewJobModal from '@/components/NewJobModal';
+import JobsHeader from '@/components/jobs/JobsHeader';
+import JobsFilters, { JobStatus } from '@/components/jobs/JobsFilters';
+import JobStatusCell from '@/components/jobs/JobStatusCell';
+import JobSiteCell from '@/components/jobs/JobSiteCell';
+import JobRecipeCell from '@/components/jobs/JobRecipeCell';
+import JobProgressCell from '@/components/jobs/JobProgressCell';
+import JobCreatedCell from '@/components/jobs/JobCreatedCell';
+import JobActionsCell from '@/components/jobs/JobActionsCell';
 
-type JobStatus = 'all' | 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
+type LocalJobStatus = JobStatus;
 
 export default function Jobs() {
   const navigate = useNavigate();
-  const { jobs, jobsLoading, recipes, addJob, updateJob } = useAppStore();
+  const { jobs, jobsLoading, recipes, addJob, updateJob, setRecipes, setRecipesLoading, setJobs } = useAppStore();
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<JobStatus>('all');
+  const [statusFilter, setStatusFilter] = useState<LocalJobStatus>('all');
   const [showNewJobModal, setShowNewJobModal] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(null);
-
-  console.log('Jobs in component:', jobs); // Debug log
-  console.log('Search term:', searchTerm); // Debug log
   
+
   const filteredJobs = jobs.filter(job => {
-    console.log('Filtering job:', job); // Debug log
     const matchesSearch = 
       (job.siteUrl?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
       (job.recipe?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
@@ -51,9 +41,9 @@ export default function Jobs() {
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
-      const updatedJobs = await scrapingApi.getAllJobs();
+      const latestJobs = await scrapingApi.getAllJobs();
       // Update store with fresh data
-      // Note: This would typically update the store
+      setJobs(latestJobs);
       toast.success('Jobs refreshed successfully');
     } catch (error) {
       console.error('Failed to refresh jobs:', error);
@@ -63,52 +53,7 @@ export default function Jobs() {
     }
   };
 
-  // Auto-poll running jobs for progress updates
-  const pollRunningJobs = useCallback(async () => {
-    const runningJobs = jobs.filter(job => job.status === 'running');
-    if (runningJobs.length === 0) return;
-
-    try {
-      for (const job of runningJobs) {
-        const updatedJob = await scrapingApi.getStatus(job.id);
-        if (updatedJob.status !== job.status || updatedJob.progress !== job.progress) {
-          updateJob(job.id, updatedJob);
-        }
-      }
-    } catch (error) {
-      console.error('Failed to poll running jobs:', error);
-    }
-  }, [jobs, updateJob]);
-
-  // Start/stop polling based on running jobs
-  useEffect(() => {
-    const runningJobs = jobs.filter(job => job.status === 'running');
-    
-    if (runningJobs.length > 0) {
-      // Poll every 2 seconds for running jobs
-      const interval = setInterval(pollRunningJobs, 2000);
-      setPollingInterval(interval);
-      
-      return () => {
-        if (interval) clearInterval(interval);
-      };
-    } else {
-      // Stop polling if no running jobs
-      if (pollingInterval) {
-        clearInterval(pollingInterval);
-        setPollingInterval(null);
-      }
-    }
-  }, [jobs, pollRunningJobs, pollingInterval]);
-
-  // Cleanup polling on unmount
-  useEffect(() => {
-    return () => {
-      if (pollingInterval) {
-        clearInterval(pollingInterval);
-      }
-    };
-  }, [pollingInterval]);
+  // Per-page polling removed; app-level selective polling handles active jobs
 
   const handleCancelJob = async (job: ScrapingJob) => {
     try {
@@ -130,9 +75,37 @@ export default function Jobs() {
     }
   };
 
-  const handleStartJob = async (jobData: any) => {
+  const openNewJobModal = async () => {
     try {
-      const newJob = await scrapingApi.init(jobData);
+      setRecipesLoading(true);
+      const fresh = await recipeApi.list();
+      setRecipes(fresh);
+    } catch (error) {
+      console.error('Failed to refresh recipes before opening modal:', error);
+      toast.error('Failed to refresh recipes');
+    } finally {
+      setRecipesLoading(false);
+      setShowNewJobModal(true);
+    }
+  };
+
+  const handleStartJob = async (jobData: NewScrapingJobForm) => {
+    try {
+      // Sanitize inputs to avoid backend recipe mismatches
+      const cleaned: NewScrapingJobForm = {
+        siteUrl: (jobData.siteUrl || '').trim(),
+        recipe: (jobData.recipe || '').trim(),
+        options: jobData.options,
+      };
+
+      // Validate recipe exists on backend before starting
+      const isValid = await recipeApi.validate(cleaned.recipe);
+      if (!isValid) {
+        toast.error(`Recipe "${cleaned.recipe}" is not valid on the server`);
+        return;
+      }
+
+      const newJob = await scrapingApi.init(cleaned);
       addJob(newJob);
       setShowNewJobModal(false);
       toast.success('Scraping job started successfully!');
@@ -142,12 +115,12 @@ export default function Jobs() {
     }
   };
 
-  const getStatusCount = (status: JobStatus) => {
+  const getStatusCount = (status: LocalJobStatus) => {
     if (status === 'all') return jobs.length;
     return jobs.filter(job => (job.status || '') === status).length;
   };
 
-  const statusOptions: { value: JobStatus; label: string; color: string }[] = [
+  const statusOptions: { value: LocalJobStatus; label: string; color: string }[] = [
     { value: 'all', label: 'All Jobs', color: 'text-gray-600' },
     { value: 'pending', label: 'Pending', color: 'text-warning-600' },
     { value: 'running', label: 'Running', color: 'text-primary-600' },
@@ -170,68 +143,19 @@ export default function Jobs() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Jobs</h1>
-          <p className="text-gray-600 mt-2">
-            Monitor and manage your web scraping jobs
-          </p>
-        </div>
-        <button
-          onClick={() => setShowNewJobModal(true)}
-          className="btn-primary flex items-center space-x-2"
-        >
-          <Play className="w-4 h-4" />
-          <span>New Job</span>
-        </button>
-      </div>
+      <JobsHeader onNewJob={openNewJobModal} />
 
-      {/* Stats and Filters */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
-        {statusOptions.map((status) => (
-          <div
-            key={status.value}
-            className={cn(
-              "card cursor-pointer transition-all hover:shadow-md",
-              statusFilter === status.value && "ring-2 ring-primary-500"
-            )}
-            onClick={() => setStatusFilter(status.value)}
-          >
-            <div className="text-center">
-              <div className={cn("text-2xl font-bold", status.color)}>
-                {getStatusCount(status.value)}
-              </div>
-              <div className="text-sm text-gray-600">{status.label}</div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Search and Actions */}
-      <div className="flex items-center justify-between space-x-4">
-        <div className="flex-1 max-w-md">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search jobs..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="input pl-10"
-            />
-          </div>
-        </div>
-        <div className="flex items-center space-x-3">
-          <button
-            onClick={handleRefresh}
-            disabled={refreshing}
-            className="btn-secondary flex items-center space-x-2"
-          >
-            <RefreshCw className={cn("w-4 h-4", refreshing && "animate-spin")} />
-            <span>Refresh</span>
-          </button>
-        </div>
-      </div>
+      {/* Stats, Search and Actions */}
+      <JobsFilters
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        statusFilter={statusFilter}
+        onStatusChange={setStatusFilter}
+        statusOptions={statusOptions}
+        onRefresh={handleRefresh}
+        refreshing={refreshing}
+        getStatusCount={getStatusCount}
+      />
 
       {/* Jobs Table */}
       {filteredJobs.length === 0 ? (
@@ -282,114 +206,12 @@ export default function Jobs() {
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredJobs.map((job) => (
                   <tr key={job.id || `job-${Math.random()}`} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center space-x-2">
-                        <span className={cn("text-lg", getStatusColor(job.status || 'unknown'))}>
-                          {getStatusIcon(job.status || 'unknown')}
-                        </span>
-                        <span className={cn("badge", getStatusColor(job.status || 'unknown'))}>
-                          {job.status || 'unknown'}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="max-w-xs">
-                        <div className="text-sm font-medium text-gray-900 truncate">
-                          {job.siteUrl || 'No URL'}
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          ID: {job.id || 'Unknown ID'}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-sm text-gray-900">{job.recipe || 'No Recipe'}</span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center space-x-2">
-                        <div className="w-20 bg-gray-200 rounded-full h-2">
-                          <div
-                            className="bg-primary-600 h-2 rounded-full transition-all duration-300"
-                            style={{ width: `${Math.max(0, Math.min(100, job.progress || 0))}%` }}
-                          />
-                        </div>
-                        <span className="text-sm text-gray-600">{Math.max(0, Math.min(100, job.progress || 0))}%</span>
-                      </div>
-                      {job.processedProducts !== undefined && job.totalProducts !== undefined && (
-                        <div className="text-xs text-gray-500 mt-1">
-                          {Math.min(job.processedProducts, job.totalProducts)} / {job.totalProducts} products
-                        </div>
-                      )}
-                      {/* Performance indicator */}
-                      {job.status === 'running' && job.processedProducts && job.totalProducts && (
-                        <div className="text-xs text-primary-600 mt-1">
-                          {job.options?.maxConcurrent && job.options.maxConcurrent > 1 && (
-                            <span className="mr-2">⚡ {job.options.maxConcurrent}x concurrent</span>
-                          )}
-                          {job.options?.batchSize && job.options.batchSize > 1 && (
-                            <span>📦 {job.options.batchSize} batch size</span>
-                          )}
-                        </div>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
-                        {formatDate(job.createdAt)}
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        {formatRelativeTime(job.createdAt)}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center space-x-2">
-                        <button
-                          onClick={() => navigate(`/jobs/${job.id || 'unknown'}`)}
-                          className="p-2 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
-                          title="View Details"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </button>
-                        
-                        {(job.status || '') === 'running' && (
-                          <button
-                            onClick={() => handleCancelJob(job)}
-                            className="p-2 text-gray-400 hover:text-warning-600 hover:bg-warning-50 rounded-lg transition-colors"
-                            title="Cancel Job"
-                          >
-                            <Pause className="w-4 h-4" />
-                          </button>
-                        )}
-                        
-                        {(job.status || '') === 'completed' && (
-                          <>
-                            <button
-                              onClick={() => handleDownloadCsv(job, 'parent')}
-                              className="p-2 text-gray-400 hover:text-success-600 hover:bg-success-50 rounded-lg transition-colors"
-                              title="Download Parent CSV"
-                            >
-                              <Download className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => handleDownloadCsv(job, 'variation')}
-                              className="p-2 text-gray-400 hover:text-success-600 hover:bg-success-50 rounded-lg transition-colors"
-                              title="Download Variation CSV"
-                            >
-                              <Download className="w-4 h-4" />
-                            </button>
-                          </>
-                        )}
-                        
-                        {(job.status || '') === 'failed' && (
-                          <button
-                            onClick={() => handleCancelJob(job)}
-                            className="p-2 text-gray-400 hover:text-error-600 hover:bg-error-50 rounded-lg transition-colors"
-                            title="Remove Job"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        )}
-                      </div>
-                    </td>
+                    <JobStatusCell job={job} />
+                    <JobSiteCell job={job} />
+                    <JobRecipeCell job={job} />
+                    <JobProgressCell job={job} />
+                    <JobCreatedCell job={job} />
+                    <JobActionsCell job={job} onCancel={handleCancelJob} onDownload={handleDownloadCsv} />
                   </tr>
                 ))}
               </tbody>

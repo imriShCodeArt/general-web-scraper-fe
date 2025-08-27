@@ -21,7 +21,6 @@ export function formatDate(date: string | Date | null | undefined): string {
     
     return format(dateObj, 'MMM dd, yyyy HH:mm');
   } catch (error) {
-    console.warn('Failed to format date:', date, error);
     return 'Invalid date';
   }
 }
@@ -40,7 +39,6 @@ export function formatRelativeTime(date: string | Date | null | undefined): stri
     
     return formatDistanceToNow(dateObj, { addSuffix: true });
   } catch (error) {
-    console.warn('Failed to format relative time:', date, error);
     return 'Invalid time';
   }
 }

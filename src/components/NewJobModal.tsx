@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { X, Play, Settings } from 'lucide-react';
-import { RecipeConfig, NewScrapingJobForm } from '../types';
-import { cn, isValidUrl } from '../utils';
+import { RecipeConfig, NewScrapingJobForm } from '@/types';
+import { cn, isValidUrl } from '@/utils';
+import { Button, FormField } from '@/components/ui';
 
 interface NewJobModalProps {
   isOpen: boolean;
@@ -86,10 +87,11 @@ export default function NewJobModal({ isOpen, onClose, onSubmit, recipes }: NewJ
               <h4 className="text-sm font-medium text-gray-900">Basic Configuration</h4>
               
               {/* Site URL */}
-              <div>
-                <label htmlFor="siteUrl" className="block text-sm font-medium text-gray-700 mb-2">
-                  Site URL *
-                </label>
+              <FormField
+                label="Site URL"
+                required
+                error={errors.siteUrl?.message}
+              >
                 <input
                   {...register('siteUrl', {
                     required: 'Site URL is required',
@@ -103,16 +105,14 @@ export default function NewJobModal({ isOpen, onClose, onSubmit, recipes }: NewJ
                     errors.siteUrl ? "border-error-500 focus:ring-error-500" : ""
                   )}
                 />
-                {errors.siteUrl && (
-                  <p className="mt-1 text-sm text-error-600">{errors.siteUrl.message}</p>
-                )}
-              </div>
+              </FormField>
 
               {/* Recipe Selection */}
-              <div>
-                <label htmlFor="recipe" className="block text-sm font-medium text-gray-700 mb-2">
-                  Recipe *
-                </label>
+              <FormField
+                label="Recipe"
+                required
+                error={errors.recipe?.message}
+              >
                 <select
                   {...register('recipe', { required: 'Recipe is required' })}
                   id="recipe"
@@ -128,9 +128,6 @@ export default function NewJobModal({ isOpen, onClose, onSubmit, recipes }: NewJ
                     </option>
                   ))}
                 </select>
-                {errors.recipe && (
-                  <p className="mt-1 text-sm text-error-600">{errors.recipe.message}</p>
-                )}
                 
                 {/* Recipe Info */}
                 {recipe && (
@@ -143,7 +140,7 @@ export default function NewJobModal({ isOpen, onClose, onSubmit, recipes }: NewJ
                     </p>
                   </div>
                 )}
-              </div>
+              </FormField>
             </div>
 
             {/* Advanced Options */}
@@ -172,6 +169,7 @@ export default function NewJobModal({ isOpen, onClose, onSubmit, recipes }: NewJ
                     </label>
                     <input
                       {...register('options.maxProducts', {
+                        valueAsNumber: true,
                         min: { value: 1, message: 'Must be at least 1' },
                         max: { value: 10000, message: 'Must be at most 10,000' },
                       })}
@@ -195,6 +193,7 @@ export default function NewJobModal({ isOpen, onClose, onSubmit, recipes }: NewJ
                     </label>
                     <input
                       {...register('options.delay', {
+                        valueAsNumber: true,
                         min: { value: 0, message: 'Must be at least 0' },
                         max: { value: 10000, message: 'Must be at most 10,000' },
                       })}
@@ -219,6 +218,7 @@ export default function NewJobModal({ isOpen, onClose, onSubmit, recipes }: NewJ
                     </label>
                     <input
                       {...register('options.timeout', {
+                        valueAsNumber: true,
                         min: { value: 5000, message: 'Must be at least 5,000' },
                         max: { value: 120000, message: 'Must be at most 120,000' },
                       })}
@@ -243,6 +243,7 @@ export default function NewJobModal({ isOpen, onClose, onSubmit, recipes }: NewJ
                     </label>
                     <input
                       {...register('options.maxConcurrent', {
+                        valueAsNumber: true,
                         min: { value: 1, message: 'Must be at least 1' },
                         max: { value: 20, message: 'Must be at most 20' },
                       })}
@@ -269,6 +270,7 @@ export default function NewJobModal({ isOpen, onClose, onSubmit, recipes }: NewJ
                     </label>
                     <input
                       {...register('options.batchSize', {
+                        valueAsNumber: true,
                         min: { value: 1, message: 'Must be at least 1' },
                         max: { value: 50, message: 'Must be at most 50' },
                       })}
@@ -293,31 +295,26 @@ export default function NewJobModal({ isOpen, onClose, onSubmit, recipes }: NewJ
 
             {/* Actions */}
             <div className="flex items-center justify-end space-x-3 pt-4 border-t border-gray-200">
-              <button
+              <Button
                 type="button"
+                variant="secondary"
                 onClick={handleClose}
-                className="btn-secondary"
                 disabled={isSubmitting}
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
                 type="submit"
-                className="btn-primary"
-                disabled={isSubmitting}
+                variant="primary"
+                loading={isSubmitting}
               >
-                {isSubmitting ? (
-                  <div className="flex items-center space-x-2">
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    <span>Starting...</span>
-                  </div>
-                ) : (
+                {!isSubmitting && (
                   <div className="flex items-center space-x-2">
                     <Play className="w-4 h-4" />
                     <span>Start Job</span>
                   </div>
                 )}
-              </button>
+              </Button>
             </div>
           </form>
         </div>

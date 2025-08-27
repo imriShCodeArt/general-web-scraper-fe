@@ -1,22 +1,26 @@
 import { useState, useEffect } from 'react';
-import { useAppStore } from '../store';
-import { storageApi } from '../services/api';
+import { useAppStore } from '@/store';
+import { storageApi } from '@/services/api';
 import { toast } from 'react-hot-toast';
-import { 
-  HardDrive, 
-  Trash2, 
-  Download, 
-  AlertTriangle, 
+import {
+  Trash2,
+  AlertTriangle,
   CheckCircle,
-  Database,
-  FileText,
-  BarChart3,
-  RefreshCw,
-  Calendar,
+  XCircle,
+  Eye,
+  Download,
   Clock,
-  Globe
+  FileText,
+  Database,
+  BarChart3,
+  Settings,
+  Copy,
+  ExternalLink,
+  FileDown,
+  RefreshCw,
+  Calendar
 } from 'lucide-react';
-import { cn, formatFileSize, formatDate } from '../utils';
+import { cn, formatFileSize, formatDate } from '@/utils';
 
 interface StorageStats {
   totalJobs: number;

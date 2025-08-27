@@ -1,6 +1,6 @@
 import { cn } from '@/utils';
 
-interface LoadingSpinnerProps {
+export interface LoadingSpinnerProps {
   size?: 'sm' | 'md' | 'lg';
   className?: string;
   text?: string;
@@ -20,6 +20,7 @@ export default function LoadingSpinner({
   return (
     <div className={cn('flex flex-col items-center justify-center', className)}>
       <div
+        data-testid="loading-spinner"
         className={cn(
           'animate-spin rounded-full border-4 border-gray-200 border-t-primary-600',
           sizeClasses[size]

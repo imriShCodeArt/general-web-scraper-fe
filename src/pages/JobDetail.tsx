@@ -1,33 +1,26 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useAppStore } from '../store';
-import { scrapingApi, storageApi } from '../services/api';
+import { useAppStore } from '@/store';
+import { scrapingApi, storageApi } from '@/services/api';
 import { toast } from 'react-hot-toast';
 import { 
   ArrowLeft,
-  Play,
   Pause,
   Trash2,
   Download,
   RefreshCw,
   Clock,
-  Globe,
-  BookOpen,
-  AlertCircle,
-  CheckCircle,
-  XCircle,
-  Hourglass,
   FileText,
   Database,
   BarChart3,
-  Settings,
   Eye,
   Copy,
   ExternalLink,
-  FileDown
+  FileDown,
+  AlertCircle
 } from 'lucide-react';
-import { cn, formatDate, formatRelativeTime, getStatusColor, getStatusIcon, formatFileSize } from '../utils';
-import { ScrapingJob } from '../types';
+import { cn, formatDate, getStatusColor, getStatusIcon, formatFileSize } from '@/utils';
+import { ScrapingJob } from '@/types';
 
 export default function JobDetail() {
   const { id } = useParams();
@@ -81,25 +74,11 @@ export default function JobDetail() {
   // Helper functions to check data availability
   const hasVariations = useMemo(() => {
     const result = storageData?.variationCsv && storageData.variationCsv.trim() !== '';
-    console.log('🔍 DEBUG: hasVariations calculation:', {
-      storageDataExists: !!storageData,
-      variationCsvExists: !!storageData?.variationCsv,
-      variationCsvLength: storageData?.variationCsv?.length || 0,
-      variationCsvTrimmed: storageData?.variationCsv?.trim() || 'N/A',
-      hasVariations: result
-    });
     return result;
   }, [storageData]);
 
   const hasParentCsv = useMemo(() => {
     const result = storageData?.parentCsv && storageData.parentCsv.trim() !== '';
-    console.log('🔍 DEBUG: hasParentCsv calculation:', {
-      storageDataExists: !!storageData,
-      parentCsvExists: !!storageData?.parentCsv,
-      parentCsvLength: storageData?.parentCsv?.length || 0,
-      parentCsvTrimmed: storageData?.parentCsv?.trim() || 'N/A',
-      hasParentCsv: result
-    });
     return result;
   }, [storageData]);
 
@@ -117,20 +96,10 @@ export default function JobDetail() {
              // If job is completed, fetch storage data
        if (jobData.status === 'completed') {
          try {
-           console.log('🔍 DEBUG: Fetching storage data for completed job');
            const storage = await storageApi.getJobResult(id);
-           console.log('🔍 DEBUG: Storage data received:', {
-             storageExists: !!storage,
-             storageKeys: storage ? Object.keys(storage) : 'N/A',
-             variationCsvExists: !!storage?.variationCsv,
-             variationCsvLength: storage?.variationCsv?.length || 0,
-             parentCsvExists: !!storage?.parentCsv,
-             parentCsvLength: storage?.parentCsv?.length || 0,
-             metadata: storage?.metadata
-           });
            setStorageData(storage);
          } catch (error) {
-           console.warn('❌ DEBUG: Failed to fetch storage data:', error);
+           // Swallow storage fetch warnings but keep UI silent
          }
        }
     } catch (error) {
@@ -178,43 +147,21 @@ export default function JobDetail() {
     if (!job) return;
     
     try {
-      // DEBUG: Log storage data to understand what's available
-      console.log('🔍 DEBUG: Storage data for CSV download:', {
-        type,
-        storageData,
-        hasVariations,
-        hasParentCsv,
-        variationCsvLength: storageData?.variationCsv?.length || 0,
-        parentCsvLength: storageData?.parentCsv?.length || 0,
-        variationCsvPreview: storageData?.variationCsv?.substring(0, 200) || 'N/A',
-        parentCsvPreview: storageData?.parentCsv?.substring(0, 200) || 'N/A'
-      });
-
       // Check if CSV data exists before attempting download
       if (type === 'variation' && !hasVariations) {
-        console.log('❌ DEBUG: Variation CSV requested but hasVariations is false');
         toast.error('No variation data available for this job');
         return;
       }
       
       if (type === 'parent' && !hasParentCsv) {
-        console.log('❌ DEBUG: Parent CSV requested but hasParentCsv is false');
         toast.error('No parent data available for this job');
         return;
       }
 
-      console.log('✅ DEBUG: Proceeding with CSV download for type:', type);
       await scrapingApi.downloadCsv(job.id, type);
       toast.success(`${type} CSV downloaded successfully`);
     } catch (error) {
-      console.error('❌ DEBUG: CSV download failed:', {
-        type,
-        error,
-        errorMessage: error instanceof Error ? error.message : String(error),
-        errorStatus: (error as any)?.response?.status,
-        errorData: (error as any)?.response?.data
-      });
-      
+      console.error('Failed to download CSV:', error);
       if (type === 'variation') {
         toast.error('Variation CSV not available for this job');
       } else {
@@ -453,32 +400,6 @@ export default function JobDetail() {
              <RefreshCw className={cn("w-4 h-4", refreshing && "animate-spin")} />
              <span>Refresh</span>
            </button>
-           
-           {/* DEBUG: Manual storage data check */}
-           {job.status === 'completed' && (
-             <button
-               onClick={() => {
-                 console.log('🔍 DEBUG: Manual storage data check triggered');
-                 console.log('Current storageData:', storageData);
-                 console.log('hasVariations:', hasVariations);
-                 console.log('hasParentCsv:', hasParentCsv);
-                 if (storageData) {
-                   console.log('Storage data details:', {
-                     keys: Object.keys(storageData),
-                     variationCsv: storageData.variationCsv,
-                     parentCsv: storageData.parentCsv,
-                     metadata: storageData.metadata
-                   });
-                 }
-                 toast('Check console for debug info');
-               }}
-               className="btn-warning flex items-center space-x-2"
-               title="Debug: Check storage data in console"
-             >
-               <Eye className="w-4 h-4" />
-               <span>Debug Data</span>
-             </button>
-           )}
           
           <div className="relative group download-menu-container">
             <button
