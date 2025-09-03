@@ -30,10 +30,11 @@ export default function JobsFilters({
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
         {statusOptions.map((status) => (
-          <div
+          <button
             key={status.value}
+            type="button"
             className={cn(
-              'card cursor-pointer transition-all hover:shadow-md',
+              'card cursor-pointer transition-all hover:shadow-md text-left',
               statusFilter === status.value && 'ring-2 ring-primary-500'
             )}
             onClick={() => onStatusChange(status.value)}
@@ -42,7 +43,7 @@ export default function JobsFilters({
               <div className={cn('text-2xl font-bold', status.color)}>{getStatusCount(status.value)}</div>
               <div className="text-sm text-gray-600">{status.label}</div>
             </div>
-          </div>
+          </button>
         ))}
       </div>
 

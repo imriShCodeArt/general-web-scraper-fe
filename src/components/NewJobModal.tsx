@@ -57,6 +57,14 @@ export default function NewJobModal({ isOpen, onClose, onSubmit, recipes }: NewJ
         <div
           className="fixed inset-0 bg-gray-600 bg-opacity-75 transition-opacity"
           onClick={handleClose}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') {
+              handleClose();
+            }
+          }}
+          role="button"
+          tabIndex={0}
+          aria-label="Close modal"
         />
 
         {/* Modal */}

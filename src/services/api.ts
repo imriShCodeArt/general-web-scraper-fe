@@ -7,6 +7,7 @@ import {
   RecipeListResponse,
   RecipeResponse,
   ScrapingJobResponse,
+  ScrapingJobInitResponse,
   ScrapingJobsResponse,
   StorageStatsResponse,
   LivePerformanceResponse,
@@ -15,8 +16,12 @@ import {
 } from '@/types';
 
 // Create axios instance with base configuration
+// Use localhost which should resolve to the correct IP version
+const apiBaseURL = 'http://localhost:3000/api';
+console.log('API Base URL:', apiBaseURL);
+
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: apiBaseURL,
   timeout: 60000, // Increased timeout for scraping operations
   headers: {
     'Content-Type': 'application/json',
@@ -42,15 +47,41 @@ api.interceptors.response.use(
   (response) => {
     // Calculate request duration for performance monitoring
     if ((response.config as any).metadata?.startTime) {
-      const duration = new Date().getTime() - (response.config as any).metadata.startTime.getTime();
       // Intentionally mute slow-request logs in production
     }
     return response;
   },
   (error) => {
-    console.error('API Error:', error);
+    // Enhanced error handling for standardized responses
+    if (error.response?.data) {
+      const errorData = error.response.data;
+      if (errorData.success === false && errorData.error) {
+        // Use the standardized error message from backend
+        error.message = errorData.error;
+        if (errorData.message) {
+          error.message += `: ${errorData.message}`;
+        }
+      }
+    }
     
-    // Intentionally mute timeout warnings in production
+    // Enhanced error logging for debugging
+    console.error('API Error:', {
+      url: error.config?.url,
+      method: error.config?.method,
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data,
+      message: error.message
+    });
+    
+    // Provide more specific error messages for common issues
+    if (error.response?.status === 500) {
+      error.message = 'Server error occurred. Please check if the backend server is running properly and try again.';
+    } else if (error.response?.status === 404) {
+      error.message = 'The requested resource was not found.';
+    } else if (error.code === 'ECONNREFUSED') {
+      error.message = 'Cannot connect to the server. Please ensure the backend is running on the correct port.';
+    }
     
     return Promise.reject(error);
   }
@@ -89,13 +120,51 @@ export const recipeApi = {
 
   // Validate recipe
   validate: async (name: string): Promise<boolean> => {
-    const response = await api.post<ApiResponse<{ isValid: boolean }>>('/recipes/validate', {
-      recipeName: name,
-    });
-    if (response.data.success && response.data.data) {
-      return response.data.data.isValid;
+    // Backend recently changed; support multiple shapes and fallbacks
+    try {
+      // First try legacy body { recipeName }
+      const res1 = await api.post('/recipes/validate', { recipeName: name });
+      const d1 = res1.data;
+      if (res1.status === 200 || res1.status === 201) {
+        if (typeof d1?.success === 'boolean') {
+          if (d1.success && d1.data && typeof d1.data.isValid === 'boolean') return d1.data.isValid;
+          if (!d1.success) return false;
+        }
+        if (typeof d1?.isValid === 'boolean') return d1.isValid;
+        return true; // 200 without explicit body implies OK
+      }
+      if (res1.status === 404) return false;
+    } catch (_) {
+      // proceed to next strategy
     }
-    throw new Error(response.data.error || 'Failed to validate recipe');
+
+    try {
+      // Try alternative body { recipe }
+      const res2 = await api.post('/recipes/validate', { recipe: name });
+      const d2 = res2.data;
+      if (res2.status === 200 || res2.status === 201) {
+        if (typeof d2?.success === 'boolean') {
+          if (d2.success && d2.data && typeof d2.data.isValid === 'boolean') return d2.data.isValid;
+          if (!d2.success) return false;
+        }
+        if (typeof d2?.isValid === 'boolean') return d2.isValid;
+        return true;
+      }
+      if (res2.status === 404) return false;
+    } catch (_) {
+      // proceed to next strategy
+    }
+
+    try {
+      // Fallback: if validate shape unknown, consider recipe existence
+      const res3 = await api.get(`/recipes/get/${encodeURIComponent(name)}`);
+      if (res3.status === 200) return true;
+      if (res3.status === 404) return false;
+    } catch (_) {
+      // swallow and throw generic below
+    }
+
+    throw new Error('Failed to validate recipe');
   },
 
   // Load recipe from file
@@ -114,9 +183,11 @@ export const recipeApi = {
 export const scrapingApi = {
   // Start new scraping job
   init: async (data: NewScrapingJobForm): Promise<ScrapingJob> => {
-    const response = await api.post<ScrapingJobResponse>('/scrape/init', data);
-    if (response.data.success && response.data.data) {
-      return response.data.data;
+    const response = await api.post<ScrapingJobInitResponse>('/scrape/init', data);
+    if (response.data.success && response.data.data?.jobId) {
+      // The init endpoint only returns jobId, so we need to fetch the full job details
+      const jobId = response.data.data.jobId;
+      return await scrapingApi.getStatus(jobId);
     }
     throw new Error(response.data.error || 'Failed to start scraping job');
   },
@@ -229,7 +300,17 @@ export const performanceApi = {
 // Health check
 export const healthApi = {
   check: async (): Promise<{ status: string; timestamp: string }> => {
-    const response = await api.get('/health');
+    // Bypass axios instance baseURL ("/api") since backend exposes root "/health"
+    const response = await axios.get('/health');
+    // Handle both old and new response formats
+    if (response.data.success !== undefined) {
+      // New standardized format
+      return {
+        status: response.data.success ? 'ok' : 'error',
+        timestamp: response.data.timestamp || new Date().toISOString()
+      };
+    }
+    // Legacy format
     return response.data;
   },
 };

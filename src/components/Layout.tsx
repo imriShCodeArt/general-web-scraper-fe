@@ -138,6 +138,14 @@ export default function Layout({ children }: LayoutProps) {
         <div
           className="fixed inset-0 z-40 bg-gray-600 bg-opacity-75 md:hidden"
           onClick={() => setSidebarOpen(false)}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') {
+              setSidebarOpen(false);
+            }
+          }}
+          role="button"
+          tabIndex={0}
+          aria-label="Close sidebar"
         />
       )}
     </div>

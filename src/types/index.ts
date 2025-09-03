@@ -78,24 +78,27 @@ export interface ScrapingJobResult {
 }
 
 // API response types
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = any, E = string> {
   success: boolean;
   data?: T;
-  error?: string;
+  error?: E;
   message?: string;
+  timestamp: Date;
+  requestId: string;
 }
 
-export interface RecipeListResponse extends ApiResponse<RecipeConfig[]> {}
-export interface RecipeResponse extends ApiResponse<RecipeConfig> {}
-export interface ScrapingJobResponse extends ApiResponse<ScrapingJob> {}
-export interface ScrapingJobsResponse extends ApiResponse<ScrapingJob[]> {}
-export interface StorageStatsResponse extends ApiResponse<{
+export type RecipeListResponse = ApiResponse<RecipeConfig[]>
+export type RecipeResponse = ApiResponse<RecipeConfig>
+export type ScrapingJobResponse = ApiResponse<ScrapingJob>
+export type ScrapingJobInitResponse = ApiResponse<{ jobId: string }>
+export type ScrapingJobsResponse = ApiResponse<ScrapingJob[]>
+export type StorageStatsResponse = ApiResponse<{
   totalJobs: number;
   totalStorage: number;
   activeJobs: number;
   completedJobs: number;
   failedJobs: number;
-}> {}
+}>
 
 // Form types
 export interface NewScrapingJobForm {
@@ -188,6 +191,6 @@ export interface OverallPerformanceMetrics {
   isProcessing: boolean;
 }
 
-export interface LivePerformanceResponse extends ApiResponse<LivePerformanceMetrics> {}
-export interface PerformanceRecommendationsResponse extends ApiResponse<PerformanceRecommendations> {}
-export interface OverallPerformanceResponse extends ApiResponse<OverallPerformanceMetrics> {}
+export type LivePerformanceResponse = ApiResponse<LivePerformanceMetrics>
+export type PerformanceRecommendationsResponse = ApiResponse<PerformanceRecommendations>
+export type OverallPerformanceResponse = ApiResponse<OverallPerformanceMetrics>

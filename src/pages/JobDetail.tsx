@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAppStore } from '@/store';
 import { scrapingApi, storageApi } from '@/services/api';
@@ -13,7 +13,6 @@ import {
   FileText,
   Database,
   BarChart3,
-  Eye,
   Copy,
   ExternalLink,
   FileDown,
@@ -34,6 +33,34 @@ export default function JobDetail() {
   const [showDownloadMenu, setShowDownloadMenu] = useState(false);
   const [storageData, setStorageData] = useState<any>(null);
 
+  const fetchJobDetails = useCallback(async () => {
+    if (!id) return;
+    
+    try {
+      setLoading(true);
+      const jobData = await scrapingApi.getStatus(id);
+      setJob(jobData);
+      
+      // Update store
+      updateJob(id, jobData);
+      
+      // If job is completed, fetch storage data
+      if (jobData.status === 'completed') {
+        try {
+          const storage = await storageApi.getJobResult(id);
+          setStorageData(storage);
+        } catch (error) {
+          // Swallow storage fetch warnings but keep UI silent
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch job details:', error);
+      toast.error('Failed to load job details');
+    } finally {
+      setLoading(false);
+    }
+  }, [id, updateJob]);
+
   // Find job in store or fetch from API
   useEffect(() => {
     if (id) {
@@ -46,7 +73,7 @@ export default function JobDetail() {
         fetchJobDetails();
       }
     }
-  }, [id, jobs]);
+  }, [id, jobs, fetchJobDetails]);
 
   // Set up real-time updates for active jobs
   useEffect(() => {
@@ -57,7 +84,7 @@ export default function JobDetail() {
 
       return () => clearInterval(interval);
     }
-  }, [job?.status]);
+  }, [job, job?.status, fetchJobDetails]);
 
   // Close download menu when clicking outside
   useEffect(() => {
@@ -81,34 +108,6 @@ export default function JobDetail() {
     const result = storageData?.parentCsv && storageData.parentCsv.trim() !== '';
     return result;
   }, [storageData]);
-
-  const fetchJobDetails = async () => {
-    if (!id) return;
-    
-    try {
-      setLoading(true);
-      const jobData = await scrapingApi.getStatus(id);
-      setJob(jobData);
-      
-      // Update store
-      updateJob(id, jobData);
-      
-             // If job is completed, fetch storage data
-       if (jobData.status === 'completed') {
-         try {
-           const storage = await storageApi.getJobResult(id);
-           setStorageData(storage);
-         } catch (error) {
-           // Swallow storage fetch warnings but keep UI silent
-         }
-       }
-    } catch (error) {
-      console.error('Failed to fetch job details:', error);
-      toast.error('Failed to load job details');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -355,7 +354,7 @@ export default function JobDetail() {
       <div className="text-center py-12">
         <AlertCircle className="w-16 h-16 text-gray-400 mx-auto mb-4" />
         <h3 className="text-lg font-medium text-gray-900 mb-2">Job Not Found</h3>
-        <p className="text-gray-500 mb-6">The job you're looking for doesn't exist or has been removed.</p>
+        <p className="text-gray-500 mb-6">The job you&apos;re looking for doesn&apos;t exist or has been removed.</p>
         <button
           onClick={() => navigate('/jobs')}
           className="btn-primary"
@@ -836,7 +835,18 @@ export default function JobDetail() {
       {showDeleteConfirm && (
         <div className="fixed inset-0 z-50 overflow-y-auto">
           <div className="flex min-h-screen items-center justify-center p-4">
-            <div className="fixed inset-0 bg-gray-600 bg-opacity-75" onClick={() => setShowDeleteConfirm(false)} />
+            <div 
+              className="fixed inset-0 bg-gray-600 bg-opacity-75" 
+              onClick={() => setShowDeleteConfirm(false)}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') {
+                  setShowDeleteConfirm(false);
+                }
+              }}
+              role="button"
+              tabIndex={0}
+              aria-label="Close delete confirmation"
+            />
             <div className="relative bg-white rounded-lg p-6 max-w-md w-full">
               <div className="flex items-center space-x-3 mb-4">
                 <div className="p-2 bg-error-100 rounded-lg">

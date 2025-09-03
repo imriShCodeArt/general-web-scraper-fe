@@ -86,7 +86,7 @@ export function formatFileSize(bytes: number): string {
   const sizes = ['Bytes', 'KB', 'MB', 'GB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))  } ${  sizes[i]}`;
 }
 
 // Validate URL
@@ -120,7 +120,7 @@ export function generateId(): string {
 // Truncate text
 export function truncateText(text: string, maxLength: number): string {
   if (text.length <= maxLength) return text;
-  return text.substr(0, maxLength) + '...';
+  return `${text.substr(0, maxLength)  }...`;
 }
 
 // Parse recipe selectors for display

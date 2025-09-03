@@ -1,10 +1,8 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '@/store';
 import { scrapingApi, recipeApi } from '@/services/api';
 import { toast } from 'react-hot-toast';
 import { Clock } from 'lucide-react';
-import { cn, formatDate, formatRelativeTime, getStatusColor, getStatusIcon } from '@/utils';
 import { ScrapingJob, NewScrapingJobForm } from '@/types';
 import NewJobModal from '@/components/NewJobModal';
 import JobsHeader from '@/components/jobs/JobsHeader';
@@ -19,8 +17,7 @@ import JobActionsCell from '@/components/jobs/JobActionsCell';
 type LocalJobStatus = JobStatus;
 
 export default function Jobs() {
-  const navigate = useNavigate();
-  const { jobs, jobsLoading, recipes, addJob, updateJob, setRecipes, setRecipesLoading, setJobs } = useAppStore();
+  const { jobs, jobsLoading, recipes, addJob, setRecipes, setRecipesLoading, setJobs } = useAppStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<LocalJobStatus>('all');
   const [showNewJobModal, setShowNewJobModal] = useState(false);
@@ -98,20 +95,36 @@ export default function Jobs() {
         options: jobData.options,
       };
 
-      // Validate recipe exists on backend before starting
-      const isValid = await recipeApi.validate(cleaned.recipe);
+      // Attempt validation but do not block job start if it fails
+      let isValid = true;
+      try {
+        isValid = await recipeApi.validate(cleaned.recipe);
+      } catch (e) {
+        console.warn('Recipe validation error, proceeding anyway:', e);
+      }
       if (!isValid) {
-        toast.error(`Recipe "${cleaned.recipe}" is not valid on the server`);
-        return;
+        toast('Recipe validation failed on server; starting job anyway.');
       }
 
       const newJob = await scrapingApi.init(cleaned);
       addJob(newJob);
       setShowNewJobModal(false);
       toast.success('Scraping job started successfully!');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to start job:', error);
-      toast.error('Failed to start scraping job');
+      
+      // Provide more specific error messages based on the error type
+      let errorMessage = 'Failed to start scraping job';
+      
+      if (error.response?.status === 500) {
+        errorMessage = 'Server error occurred. Please check if the backend server is running properly and try again.';
+      } else if (error.response?.status === 400) {
+        errorMessage = 'Invalid request data. Please check your input and try again.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      toast.error(errorMessage);
     }
   };
 

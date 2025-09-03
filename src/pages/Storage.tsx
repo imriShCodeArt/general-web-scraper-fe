@@ -6,17 +6,10 @@ import {
   Trash2,
   AlertTriangle,
   CheckCircle,
-  XCircle,
-  Eye,
-  Download,
   Clock,
   FileText,
   Database,
   BarChart3,
-  Settings,
-  Copy,
-  ExternalLink,
-  FileDown,
   RefreshCw,
   Calendar
 } from 'lucide-react';
@@ -320,7 +313,18 @@ export default function Storage() {
       {showClearConfirm && (
         <div className="fixed inset-0 z-50 overflow-y-auto">
           <div className="flex min-h-screen items-center justify-center p-4">
-            <div className="fixed inset-0 bg-gray-600 bg-opacity-75" onClick={() => setShowClearConfirm(false)} />
+            <div 
+              className="fixed inset-0 bg-gray-600 bg-opacity-75" 
+              onClick={() => setShowClearConfirm(false)}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') {
+                  setShowClearConfirm(false);
+                }
+              }}
+              role="button"
+              tabIndex={0}
+              aria-label="Close clear confirmation"
+            />
             <div className="relative bg-white rounded-lg p-6 max-w-md w-full">
               <div className="flex items-center space-x-3 mb-4">
                 <div className="p-2 bg-error-100 rounded-lg">

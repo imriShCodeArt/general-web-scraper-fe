@@ -3,7 +3,6 @@ import { Routes, Route } from 'react-router-dom';
 import { useAppStore } from '@/store';
 import { recipeApi, scrapingApi } from '@/services/api';
 import { toast } from 'react-hot-toast';
-import { APP_CONFIG } from '@/constants';
 
 // Components
 import Layout from '@/components/Layout';
@@ -21,8 +20,7 @@ function App() {
     setRecipes, 
     setJobs, 
     setRecipesLoading, 
-    setJobsLoading,
-    updateJob 
+    setJobsLoading
   } = useAppStore();
 
   // Load initial data

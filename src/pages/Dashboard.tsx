@@ -179,9 +179,10 @@ export default function Dashboard() {
           ) : (
             <div className="space-y-3">
               {recentJobs.map((job) => (
-                <div
+                <button
                   key={job.id || `dashboard-job-${Math.random()}`}
-                  className="flex items-center justify-between p-3 rounded-lg border border-gray-200 hover:border-gray-300 transition-colors cursor-pointer"
+                  type="button"
+                  className="flex items-center justify-between p-3 rounded-lg border border-gray-200 hover:border-gray-300 transition-colors cursor-pointer w-full text-left"
                   onClick={() => handleJobClick(job)}
                 >
                   <div className="flex items-center space-x-3">
@@ -207,7 +208,7 @@ export default function Dashboard() {
                       </div>
                     )}
                   </div>
-                </div>
+                </button>
               ))}
             </div>
           )}
