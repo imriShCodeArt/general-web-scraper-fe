@@ -110,18 +110,19 @@ export default function Jobs() {
       addJob(newJob);
       setShowNewJobModal(false);
       toast.success('Scraping job started successfully!');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to start job:', error);
       
       // Provide more specific error messages based on the error type
       let errorMessage = 'Failed to start scraping job';
       
-      if (error.response?.status === 500) {
+      const err = error as { response?: { status?: number }; message?: string };
+      if (err.response?.status === 500) {
         errorMessage = 'Server error occurred. Please check if the backend server is running properly and try again.';
-      } else if (error.response?.status === 400) {
+      } else if (err.response?.status === 400) {
         errorMessage = 'Invalid request data. Please check your input and try again.';
-      } else if (error.message) {
-        errorMessage = error.message;
+      } else if (err.message) {
+        errorMessage = err.message;
       }
       
       toast.error(errorMessage);

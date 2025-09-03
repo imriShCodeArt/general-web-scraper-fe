@@ -59,7 +59,7 @@ export interface ScrapingJob {
     batchSize?: number; // Added for batch processing
   };
   metadata?: {
-    [key: string]: any;
+    [key: string]: unknown;
   };
 }
 
@@ -78,7 +78,7 @@ export interface ScrapingJobResult {
 }
 
 // API response types
-export interface ApiResponse<T = any, E = string> {
+export interface ApiResponse<T = unknown, E = string> {
   success: boolean;
   data?: T;
   error?: E;

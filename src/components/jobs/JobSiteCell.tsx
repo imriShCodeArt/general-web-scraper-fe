@@ -9,7 +9,7 @@ export default function JobSiteCell({ job }: Props) {
   const siteUrl = useMemo(() => {
     const direct = (job.siteUrl || '').trim();
     if (direct) return direct;
-    const meta = (job as any)?.metadata?.siteUrl as string | undefined;
+    const meta = (job.metadata?.siteUrl as string | undefined);
     if (meta && meta.trim()) return meta.trim();
     return '';
   }, [job]);

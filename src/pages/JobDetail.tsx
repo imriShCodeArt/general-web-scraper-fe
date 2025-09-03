@@ -31,7 +31,15 @@ export default function JobDetail() {
   const [refreshing, setRefreshing] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showDownloadMenu, setShowDownloadMenu] = useState(false);
-  const [storageData, setStorageData] = useState<any>(null);
+  const [storageData, setStorageData] = useState<{
+    metadata?: {
+      totalProducts?: number;
+      totalVariations?: number;
+      totalStorage?: number;
+    };
+    parentCsv?: string;
+    variationCsv?: string;
+  } | null>(null);
 
   const fetchJobDetails = useCallback(async () => {
     if (!id) return;

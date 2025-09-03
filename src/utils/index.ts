@@ -100,7 +100,7 @@ export function isValidUrl(string: string): boolean {
 }
 
 // Debounce function
-export function debounce<T extends (...args: any[]) => any>(
+export function debounce<T extends (...args: unknown[]) => unknown>(
   func: T,
   wait: number
 ): (...args: Parameters<T>) => void {
@@ -158,8 +158,15 @@ export const calculateScrapingEfficiency = (
   };
 };
 
-export const getPerformanceRecommendations = (job: any) => {
-  const recommendations = [];
+export const getPerformanceRecommendations = (job: {
+  options?: {
+    delay?: number;
+    maxConcurrent?: number;
+    batchSize?: number;
+    timeout?: number;
+  };
+}) => {
+  const recommendations: string[] = [];
   
   if (job.options?.delay && job.options.delay > 500) {
     recommendations.push('Consider reducing delay to 200-300ms for faster processing');
@@ -180,12 +187,14 @@ export const getPerformanceRecommendations = (job: any) => {
   return recommendations;
 };
 
-export const formatPerformanceMetrics = (efficiency: any) => {
-  return {
-    speed: `${efficiency.productsPerSecond} products/sec`,
-    eta: efficiency.estimatedTimeRemaining > 0 
-      ? `${Math.round(efficiency.estimatedTimeRemaining / 60)} min remaining`
-      : 'Complete',
-    efficiency: `${efficiency.efficiency}% complete`,
-  };
-};
+export const formatPerformanceMetrics = (efficiency: {
+  productsPerSecond: number;
+  estimatedTimeRemaining: number;
+  efficiency: number;
+}) => ({
+  speed: `${efficiency.productsPerSecond} products/sec`,
+  eta: efficiency.estimatedTimeRemaining > 0
+    ? `${Math.round(efficiency.estimatedTimeRemaining / 60)} min remaining`
+    : 'Complete',
+  efficiency: `${efficiency.efficiency}% complete`,
+});

@@ -13,7 +13,7 @@ export default function JobRecipeCell({ job }: Props) {
     const direct = (job.recipe || '').trim();
     if (direct) return direct;
 
-    const meta = (job as any)?.metadata?.recipe as string | undefined;
+    const meta = (job.metadata?.recipe as string | undefined);
     if (meta && meta.trim()) return meta.trim();
 
     // Try resolve by site URL match if available
